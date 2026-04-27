@@ -1,0 +1,36 @@
+name: Build MicroPython UF2
+
+on:
+  push:
+    branches: [ master, main ]
+  workflow_dispatch:  # allows manual trigger
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install ARM toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-none-eabi cmake python3
+
+      - name: Build mpy-cross
+        run: make -C mpy-cross
+
+      - name: Build firmware
+        run: |
+          cd ports/rp2
+          make BOARD=RPI_PICO2 submodules
+          make BOARD=RPI_PICO2
+
+      - name: Upload UF2 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RPI_PICO2_RP2354A_1MB
+          path: ports/rp2/build-RPI_PICO2/firmware.uf2
